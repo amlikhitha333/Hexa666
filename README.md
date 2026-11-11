@@ -1,102 +1,95 @@
 <div align="center">
 
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0:7F00FF,50:E100FF,100:FF512F&height=220&section=header&text=HEXA&fontSize=90&fontColor=ffffff&animation=fadeIn&fontAlignY=38&desc=Wave%20your%20phone.%20Move%20a%20robot.&descAlignY=60&descSize=22" alt="HEXA banner" width="100%">
+# HEXA
 
-<a href="https://github.com/amlikhitha333/Hexa666">
-  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=20&pause=1200&color=C77DFF&center=true&vCenter=true&width=620&lines=%F0%9F%93%B1+Your+phone+is+the+leader+arm;%F0%9F%A6%BE+Teleoperate+an+SO-101+robot+arm;%F0%9F%93%A6+Record+LeRobot-ready+datasets;%F0%9F%9A%80+No+second+robot+needed" alt="Typing animation">
-</a>
+**Phone-based teleoperation for the SO-101 robot arm**
 
-<br><br>
-
-<img src="docs/media/hexa-sim-demo.gif" alt="HEXA moving a simulated SO-101 arm" width="720">
-
-<br><br>
-
-![Android](https://img.shields.io/badge/ANDROID-ARCORE-3DDC84?style=for-the-badge&logo=android&logoColor=white)
-![iPhone](https://img.shields.io/badge/IPHONE-ARKIT-111111?style=for-the-badge&logo=apple&logoColor=white)
-![Python](https://img.shields.io/badge/PYTHON-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)
-![LeRobot](https://img.shields.io/badge/DATA-LEROBOT-FFB000?style=for-the-badge&logo=huggingface&logoColor=white)
-![Robot](https://img.shields.io/badge/ROBOT-SO--101-FF512F?style=for-the-badge)
-![MIT](https://img.shields.io/badge/LICENSE-MIT-7F00FF?style=for-the-badge)
+Move your phone, and the arm follows. Every motion can be recorded as a LeRobot dataset.
 
 <br>
 
-**[💡 Pitch](#-the-pitch)** &nbsp;•&nbsp; **[🧠 How it works](#-how-it-works)** &nbsp;•&nbsp; **[🚀 Get running](#-get-running)** &nbsp;•&nbsp; **[🎥 Data](#-collect-data)** &nbsp;•&nbsp; **[🦾 Real arm](#-going-live-with-the-real-arm)** &nbsp;•&nbsp; **[❓ FAQ](#-faq)**
+![Platform](https://img.shields.io/badge/platform-Android%20%7C%20iOS-555555?style=flat-square)
+![Server](https://img.shields.io/badge/server-Python%203.10%2B-555555?style=flat-square)
+![Robot](https://img.shields.io/badge/robot-SO--101-555555?style=flat-square)
+![Data](https://img.shields.io/badge/data-LeRobot-555555?style=flat-square)
+![License](https://img.shields.io/badge/license-MIT-555555?style=flat-square)
+
+<br>
+
+<img src="docs/media/hexa-sim-demo.gif" alt="HEXA driving a simulated SO-101 arm" width="720">
+
+<sub>An iPhone driving the simulated arm. No leader arm required.</sub>
+
+<br>
+
+[Overview](#overview) · [Architecture](#architecture) · [Quick start](#quick-start) · [Data collection](#data-collection) · [Real hardware](#real-hardware) · [Safety](#safety) · [FAQ](#faq)
 
 </div>
 
-<br>
+---
 
-## 💡 The pitch
+## Overview
 
-🤖 Robots learn by watching humans do the task. The usual way to teach them is a **leader arm**: a second robot you push around while the first one copies you.
+Imitation learning depends on large numbers of good human demonstrations. The usual way to collect them is a leader arm: a second robot that a person moves while the follower copies. It works well, but it adds hardware, wiring and cost.
 
-📱 We asked a silly question: **what if the leader arm was already in your pocket?**
+HEXA replaces the leader arm with a device most people already own. A phone's built-in motion tracking (ARCore on Android, ARKit on iOS) is streamed to a Python server, converted into joint commands for the SO-101, and optionally logged as a LeRobot dataset.
 
-Your phone knows exactly where it is and which way it points. **HEXA** reads that, turns it into joint angles for the SO-101, and saves everything in the format LeRobot loves. You hold the phone ➜ the arm follows ➜ a training dataset builds itself. ✨
+| | |
+| :--- | :--- |
+| **Input** | A phone running ARCore (Android) or ARKit (iOS) |
+| **Output** | A real SO-101 arm, or a simulated arm in the browser |
+| **Data** | LeRobot-format episodes: state, action, camera video, task label |
+| **Server** | Python on macOS, Ubuntu, or Windows (WSL2) |
+| **Network** | Phone and computer on the same Wi-Fi |
 
-<br>
+---
 
-## ⚡ At a glance
-
-| 🎯 | What |
-| :---: | :--- |
-| 📱 | **You move** a phone (Android with ARCore, or iPhone with ARKit) |
-| 🦾 | **It moves** a real SO-101 arm, or a simulated one in your browser |
-| 📦 | **You get** LeRobot episodes: state, action, camera video and task label |
-| 💻 | **Runs on** a Python server (macOS, Ubuntu, Windows via WSL2) |
-| 📶 | **Needs** phone and computer on the same Wi-Fi |
-
-<br>
-
-## 🧠 How it works
+## Architecture
 
 ```mermaid
 flowchart LR
-    A["📱 Phone<br>tracks itself"] -->|"pose over Wi-Fi"| B["🧮 HEXA server<br>Python"]
-    B -->|"IK + safety limits"| C["🦾 SO-101 arm<br>or simulator"]
-    B -.->|"optional"| D[("📦 LeRobot<br>dataset")]
-    B -->|"port 8080"| E["🌐 Browser viewer"]
-    style A fill:#7F00FF,color:#fff,stroke:#fff
-    style B fill:#E100FF,color:#fff,stroke:#fff
-    style C fill:#FF512F,color:#fff,stroke:#fff
-    style D fill:#FFB000,color:#000,stroke:#fff
-    style E fill:#3DDC84,color:#000,stroke:#fff
+    A[Phone app<br>Android / iOS] -->|pose over Wi-Fi| B[HEXA server<br>Python]
+    B -->|inverse kinematics<br>and safety limits| C[SO-101 arm<br>or simulator]
+    B -.->|optional| D[(LeRobot dataset)]
+    B -->|port 8080| E[Browser viewer]
 ```
 
-1. 📍 The phone tracks its own position and rotation.
-2. 📡 It streams the pose to the server over your Wi-Fi.
-3. 🧮 The server converts it into joint angles with smoothing, speed limits and joint limits.
-4. 🦾 The arm moves, 🌐 the viewer shows it live, and 🎥 the recorder logs the episode.
+1. The phone tracks its own position and rotation.
+2. The pose is streamed to the server over the local network.
+3. The server converts it to SO-101 joint angles, applying smoothing, speed limits and joint limits.
+4. The arm or simulator moves, the viewer displays it, and the recorder logs the episode if enabled.
 
-<br>
+---
 
-## 📸 See it in action
+## Interface
 
 <p align="center">
-  <img src="docs/media/hexa-app-connect.jpg" alt="Connect screen" height="400">
-  &nbsp;&nbsp;&nbsp;
-  <img src="docs/media/hexa-app-controls.jpg" alt="Control pad" height="400">
-  &nbsp;&nbsp;&nbsp;
-  <img src="docs/media/hexa-app-demo.gif" alt="App walkthrough" height="400">
+  <img src="docs/media/hexa-app-connect.jpg" alt="Connect screen" height="380">
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="docs/media/hexa-app-controls.jpg" alt="Control pad" height="380">
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="docs/media/hexa-app-demo.gif" alt="App walkthrough" height="380">
 </p>
 
 <p align="center">
-  <img src="docs/media/hexa-sim-viewer.jpg" alt="Browser viewer with pick and place scene" width="720">
+  <img src="docs/media/hexa-sim-viewer.jpg" alt="Browser viewer with pick-and-place scene" width="720">
 </p>
 
-🎮 The viewer shows live joint angles and a mini pick-and-place scene. Open the gripper ➜ close it around an object to grab ➜ open to drop ➜ press `R` to reset.
+The browser viewer at `localhost:8080` shows live joint angles and a pick-and-place scene. Open the gripper, close it around an object to grab it, open it to release, and press `R` to reset.
 
-<br>
+---
 
-## 🚀 Get running
+## Quick start
 
-🧪 Start in the **simulator**. Nothing can break, and you learn the controls before touching real hardware.
+Begin with the simulator. No arm is required and nothing can be damaged.
 
-> [!NOTE]
-> 🐍 You need **Python 3.10+**, a phone with **ARCore or ARKit**, and **one shared Wi-Fi** for the phone and the computer.
+**Requirements**
 
-### 1️⃣ Unpack and start the server 🖥️
+- Python 3.10 or newer
+- An Android phone with ARCore, or an iPhone with ARKit
+- Phone and computer on the same Wi-Fi network
+
+### 1. Start the server
 
 ```bash
 unzip HEXA-Teleop.zip
@@ -106,223 +99,201 @@ chmod +x emberarm.sh
 ./emberarm.sh start --sim
 ```
 
-🪟 On Windows: `emberarm.bat setup --no-lerobot` then `emberarm.bat start --sim`.
+On Windows, use `emberarm.bat setup --no-lerobot` followed by `emberarm.bat start --sim`.
 
-The server prints an address like `ws://192.168.x.x:4443/ws`. 📋 Copy it!
+The server prints an address such as `ws://192.168.x.x:4443/ws`. Copy it for the next steps.
 
-### 2️⃣ Put the app on your phone 📲
+### 2. Install the phone app
 
 <details>
-<summary><b>🤖 Android</b></summary>
+<summary><b>Android</b></summary>
 <br>
 
-1. 📂 Copy `EmberArm-Final.apk` to the phone and tap it.
-2. ✅ Allow **Install unknown apps**, and tap **Install anyway** if Play Protect complains.
-3. 📷 Open the app and allow **Camera**.
-4. 🧩 Install or update **Google Play Services for AR** if asked.
+1. Copy `EmberArm-Final.apk` to the phone and open it.
+2. Allow **Install unknown apps** when prompted. If Play Protect warns you, choose **Install anyway**.
+3. Open the app and grant **Camera** permission.
+4. Install or update **Google Play Services for AR** if requested.
 
 </details>
 
 <details>
-<summary><b>🍎 iPhone</b></summary>
+<summary><b>iPhone</b></summary>
 <br>
 
-1. 🛠️ Install [Sideloadly](https://sideloadly.io) on a Mac or Windows PC.
-2. 🔌 Plug in the iPhone, drag `PhoneTeleop.ipa` into Sideloadly, sign in with your Apple ID and press **Start**.
-3. 🔐 On the phone: **Settings → General → VPN & Device Management** and trust your Apple ID.
-4. 🧑‍💻 Turn on **Developer Mode** if iOS asks, then restart.
-5. 📷 Open **HEXA** and allow **Camera**.
+1. Install [Sideloadly](https://sideloadly.io) on a Mac or Windows PC.
+2. Connect the iPhone, drag `PhoneTeleop.ipa` into Sideloadly, sign in with your Apple ID and select **Start**.
+3. On the phone, trust your Apple ID under **Settings > General > VPN & Device Management**.
+4. Enable **Developer Mode** if prompted, then restart the device.
+5. Open **HEXA** and grant **Camera** permission.
 
-⏳ Free Apple IDs expire the app after 7 days. Just sideload again.
+Free Apple ID signing expires after 7 days. Sideload the app again when that happens.
 
 </details>
 
-### 3️⃣ Connect, calibrate, move 🎮
+### 3. Connect and calibrate
 
-1. 🔗 Type the server address into the app and tap **Connect**.
-2. 👀 Tap **Start tracking** and sweep the phone slowly over a bright, patterned surface until it says **Ready**.
-3. 🎯 Point the back camera toward the front of the robot and tap **Calibrate**.
-4. 👍 Put your thumb on the pad and move!
+1. Enter the server address in the app and tap **Connect**.
+2. Tap **Start tracking** and move the phone slowly over a bright, patterned surface until the status reads **Ready**.
+3. Point the back camera toward the front of the robot and tap **Calibrate**.
+4. Hold the pad to move.
 
-<br>
+### Controls
 
-## 🎮 Controls cheat sheet
-
-| 🕹️ Gesture | ✨ Result |
+| Input | Behavior |
 | :--- | :--- |
-| 👍 Hold the pad | The arm follows your phone |
-| ⬅️ Left half of the pad | 🐢 Fine mode: slow and precise |
-| ➡️ Right half of the pad | 🐇 Normal speed |
-| ↕️ Slide thumb up or down | 🤏 Open or close the gripper |
-| ✋ Let go | 🛑 The arm stops. Next press starts where the arm is, so it never jumps |
+| Hold the pad | The arm follows the phone |
+| Left half of the pad | Fine mode: slow and precise |
+| Right half of the pad | Normal speed |
+| Slide thumb up or down | Open or close the gripper |
+| Release | The arm stops. The next press starts from the arm's current pose, so it never jumps |
 
-<br>
+---
 
-## 🎥 Collect data
+## Data collection
 
 ```bash
 ./emberarm.sh record --sim --max-speed 150
 ```
 
-🏷️ Add `--task "pick up the cube"` to label episodes. Data lands in `server/datasets/emberarm_demo` (change with `--dataset-dir`).
+Add `--task "pick up the cube"` to label episodes. Data is written to `server/datasets/emberarm_demo` by default; use `--dataset-dir` to change this.
 
-| 🧰 If you have | 🎁 You get |
+| Environment | Output |
 | :--- | :--- |
-| 🤗 LeRobot installed | A proper **LeRobotDataset** at 30 fps: `observation.state`, `action`, video and task |
-| 💾 No LeRobot | Plain **NPZ** files, so no demo is ever lost. Convert later |
+| LeRobot installed | A LeRobotDataset at 30 fps with `observation.state`, `action`, camera video and task |
+| LeRobot not installed | Plain NPZ files, so no demonstration is lost. These can be converted later |
 
-<br>
+---
 
-## 🦾 Going live with the real arm
+## Real hardware
 
 > [!WARNING]
-> ⚠️ **The real arm moves for real!** Keep a hand near the power supply, move slowly, and support the arm before stopping the server. When the server stops, the motors switch off and the arm goes limp.
+> The real arm moves. Keep a hand near the power supply, move slowly, and support the arm before stopping the server. When the server stops, the motors switch off and the arm goes limp.
 
 ```bash
-./emberarm.sh setup          # 📥 installs LeRobot (large download)
-./emberarm.sh calibrate      # 🔧 move every joint through its full range, once
-./emberarm.sh start          # 🧪 dry run: prints actions, nothing moves
-./emberarm.sh start --live   # 🔥 drives the real arm
+./emberarm.sh setup          # installs LeRobot (large download)
+./emberarm.sh calibrate      # move each joint through its full range, once
+./emberarm.sh start          # dry run: prints actions, nothing moves
+./emberarm.sh start --live   # drives the real arm
 ```
 
-| 🚩 Flag | 🎯 Use it when |
+| Flag | Use when |
 | :--- | :--- |
-| `--arm-port /dev/ttyACM0` (or `COM3`) | 🔌 More than one USB device is plugged in |
-| `--id YOUR_NAME` | 🏷️ You named the arm during calibration |
-| `--roll-sign -1` | 🔄 The wrist twists the wrong way |
-| `--invert-gripper` | 🤏 The gripper opens when it should close |
-| `--max-speed N` | 🐢 Joint speed cap in degrees per second |
+| `--arm-port /dev/ttyACM0` (or `COM3`) | More than one USB device is connected |
+| `--id YOUR_NAME` | The arm was given a custom name during calibration |
+| `--roll-sign -1` | The wrist rotates in the wrong direction |
+| `--invert-gripper` | The gripper opens when it should close |
+| `--max-speed N` | A joint speed cap in degrees per second is needed |
 
-🐧 On Ubuntu, if the USB port says "permission denied": `sudo usermod -aG dialout $USER`, then log in again.
+On Ubuntu, if the serial port reports "permission denied", run `sudo usermod -aG dialout $USER` and log in again.
 
-<br>
+---
 
-## 🛡️ Safety built in
+## Safety
 
-- 🟢 The arm moves only while you **hold the pad** and tracking says **Ready**.
-- 📴 Letting go, closing the app, or 3 seconds of lost Wi-Fi stops new commands.
-- 🐢 Speed and joint ranges are capped in software.
+- The arm moves only while the pad is held and tracking reports Ready.
+- Releasing the pad, closing the app, or losing Wi-Fi for 3 seconds stops new commands.
+- Speed and joint ranges are limited in software.
 
 > [!IMPORTANT]
-> 🧑‍🔬 HEXA is a lab tool, not a certified safety system. Stay close, go slow.
+> HEXA is a laboratory tool, not a certified safety system. Stay close to the arm and move slowly.
 
-<br>
+---
 
-## 📦 What is in the box
+## Repository contents
 
-Unzip **`HEXA-Teleop.zip`** to get a folder called **`EmberArm-Team`**:
+Unzip `HEXA-Teleop.zip` to obtain the `EmberArm-Team` folder:
 
-| 📁 Item | 📝 What it is |
+| Item | Description |
 | :--- | :--- |
-| 🤖 `EmberArm-Final.apk` | Android app, ready to install |
-| 🍎 `PhoneTeleop.ipa` | iPhone app, shows up as HEXA once sideloaded |
-| 🖥️ `server/` | Python host: kinematics, safety, robot control, recorder, viewer |
-| 📲 `app-source/` | Phone app source (React Native + native ARCore and ARKit modules) |
-| 📄 `FRIEND-SETUP.md` | One-page Windows quick start |
+| `EmberArm-Final.apk` | Android app, ready to install |
+| `PhoneTeleop.ipa` | iOS app, appears as HEXA once sideloaded |
+| `server/` | Python host: kinematics, safety, robot control, recorder, browser viewer |
+| `app-source/` | Phone app source: React Native with native ARCore and ARKit modules |
+| `FRIEND-SETUP.md` | One-page Windows quick start |
 
-🔨 **Rebuilding the apps** is only needed if you change `app-source/` (Node.js 22+). Android needs JDK 17 and the Android SDK (`./build-apk.sh`). iOS needs a Mac with Xcode (`npm install`, then `pod install` inside `ios/`).
+**Rebuilding the apps** is only necessary after changing `app-source/` and requires Node.js 22+. Android additionally needs JDK 17 and the Android SDK (`./build-apk.sh`). iOS needs a Mac with Xcode (`npm install`, then `pod install` inside `ios/`).
 
-<br>
+---
 
-## ❓ FAQ
+## FAQ
 
 <details>
-<summary><b>🤔 Do I need a leader arm?</b></summary>
+<summary><b>Is a leader arm required?</b></summary>
 <br>
-Nope! That is the whole point. Your phone is the leader. 📱
+No. The phone replaces it.
 </details>
 
 <details>
-<summary><b>🧪 Can I try it without the robot?</b></summary>
+<summary><b>Can I try HEXA without a robot?</b></summary>
 <br>
-Yes! Use <code>start --sim</code> and watch the simulated arm at <code>localhost:8080</code>. You can also tap <b>Preview the controls</b> on the app's first screen to explore with no server at all.
+Yes. Run <code>start --sim</code> and open <code>localhost:8080</code>. You can also tap <b>Preview the controls</b> on the app's first screen to explore without a server.
 </details>
 
 <details>
-<summary><b>📶 The app can't connect</b></summary>
+<summary><b>The app cannot connect to the server</b></summary>
 <br>
-Keep the server window open, use the same Wi-Fi on both devices, and type the address exactly as printed. Office and guest Wi-Fi often block device-to-device traffic, so try a home router or phone hotspot. On Windows, allow ports 4443 and 8080 through the firewall. The address can change when Wi-Fi reconnects, so restart the server and copy the new one.
+Keep the server running, ensure both devices are on the same Wi-Fi, and enter the address exactly as printed. Office and guest networks often block device-to-device traffic; try a home router or a phone hotspot. On Windows, allow ports 4443 and 8080 through the firewall. The address can change when Wi-Fi reconnects, so restart the server and copy the new one.
 </details>
 
 <details>
-<summary><b>👀 "Initializing" or "Tracking lost"</b></summary>
+<summary><b>The status shows "Initializing" or "Tracking lost"</b></summary>
 <br>
-Point the back camera at a bright, patterned surface and move slowly. Blank walls and dark rooms confuse phone tracking. Tap <b>Calibrate</b> again after tracking returns.
+Point the back camera at a bright, patterned surface and move slowly. Blank walls and dim rooms degrade phone tracking. Tap <b>Calibrate</b> again once tracking returns.
 </details>
 
 <details>
-<summary><b>🫨 The motion feels shaky</b></summary>
+<summary><b>Motion appears shaky</b></summary>
 <br>
-Hold the phone with both hands and move steadily. To compare with raw motion, start the server with <code>EMBERARM_SMOOTH=0</code>.
+Hold the phone with both hands and move steadily. To compare against unsmoothed motion, start the server with <code>EMBERARM_SMOOTH=0</code>.
 </details>
 
 <details>
-<summary><b>🔇 "Phone went silent"</b></summary>
+<summary><b>The server reports "Phone went silent"</b></summary>
 <br>
-The phone stopped sending for 3 seconds (screen locked, app in background, or Wi-Fi dropped). Keep the screen on and reconnect.
+The phone stopped sending for 3 seconds because the screen locked, the app moved to the background, or Wi-Fi dropped. Keep the screen on and reconnect.
 </details>
 
 <details>
-<summary><b>🧮 How do I check the maths with no hardware?</b></summary>
+<summary><b>How can I verify the kinematics without hardware?</b></summary>
 <br>
-Run <code>./emberarm.sh selftest</code>. It should finish with <code>URDF OK</code>. ✅
+Run <code>./emberarm.sh selftest</code>. It should finish with <code>URDF OK</code>.
 </details>
 
-<br>
+---
 
-## ✅ Tested on
+## Tested configurations
 
-| 📱 Hardware | 🏁 Result |
+| Configuration | Status |
 | :--- | :---: |
-| iPhone 13 (ARKit) | ✅ Works |
-| Samsung Galaxy A35 (ARCore) | ✅ Works |
-| Real SO-101 arm | ✅ Works |
-| Simulator + browser viewer | ✅ Works |
-| Server on macOS | ✅ Built and tested here |
-| Server on Ubuntu / Windows (WSL2) | 🟡 Same code, should work. Reports welcome |
+| iPhone 13 (ARKit) | Verified |
+| Samsung Galaxy A35 (ARCore) | Verified |
+| Real SO-101 arm | Verified |
+| Simulator and browser viewer | Verified |
+| Server on macOS | Verified |
+| Server on Ubuntu or Windows (WSL2) | Same code, expected to work |
 
-📲 Other ARKit or ARCore phones should work too!
+Other ARKit and ARCore devices should also work.
 
-<br>
+---
 
-## 🧰 Built with
+## Technology
 
-![React Native](https://img.shields.io/badge/React_Native-20232A?style=flat-square&logo=react&logoColor=61DAFB)
-![Kotlin](https://img.shields.io/badge/Kotlin-7F52FF?style=flat-square&logo=kotlin&logoColor=white)
-![Swift](https://img.shields.io/badge/Swift-FA7343?style=flat-square&logo=swift&logoColor=white)
-![Python](https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white)
-![NumPy](https://img.shields.io/badge/NumPy-013243?style=flat-square&logo=numpy&logoColor=white)
-![three.js](https://img.shields.io/badge/three.js-000000?style=flat-square&logo=threedotjs&logoColor=white)
-![Hugging Face](https://img.shields.io/badge/LeRobot-FFD21E?style=flat-square&logo=huggingface&logoColor=black)
+React Native · Kotlin and ARCore · Swift and ARKit · Python (`websockets`, `numpy`, `pyserial`) · LeRobot · SO-101 URDF · three.js
 
-<br>
+---
 
-## 👩‍💻 Team
+## Team
 
-<div align="center">
+**Deepak** · **A M Likhitha** · **Chiranthan P**
 
-### 🚀 **Deepak** &nbsp;•&nbsp; 💜 **A M Likhitha** &nbsp;•&nbsp; 🤖 **Chiranthan P**
+Developed as part of our robotics research work.
 
-*Three students. One phone. One robot arm.* ✨
+---
 
-</div>
+## Acknowledgments
 
-<br>
+HEXA builds on the SO-101 / SO-ARM100 design by TheRobotStudio and Hugging Face, LeRobot, onshape-to-robot, Google ARCore, Apple ARKit, React Native and three.js.
 
-## 🙏 Thanks and license
+## License
 
-HEXA stands on open-source shoulders: **SO-101 / SO-ARM100** by TheRobotStudio and Hugging Face, **LeRobot**, **onshape-to-robot**, **Google ARCore**, **Apple ARKit**, **React Native** and **three.js**. 💖
-
-📄 HEXA's own code is released under the [MIT License](LICENSE). The SO-101 design files and third-party libraries keep their original licenses.
-
-<div align="center">
-
-<br>
-
-⭐ **If HEXA helps your research or your weekend project, drop a star!** ⭐
-
-<sub>🔬 A research project, still a work in progress.</sub>
-
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0:FF512F,50:E100FF,100:7F00FF&height=120&section=footer" alt="footer" width="100%">
-
-</div>
+HEXA's code is released under the [MIT License](LICENSE). The SO-101 design files and third-party libraries retain their original licenses.
