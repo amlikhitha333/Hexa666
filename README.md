@@ -1,24 +1,21 @@
 <div align="center">
 
-# HEXA
+<img src="docs/media/hexa-banner.svg" alt="HEXA: your phone is the leader arm" width="100%">
 
-**Teleoperate a robot arm with your phone.**
+<br>
 
-A phone-driven control and data-collection system for the SO-101 robot arm.<br>
-Move the phone, the arm follows, and every demonstration is recorded in LeRobot format.
+**Phone-driven teleoperation and data collection for the SO-101 robot arm.**<br>
+Move your phone, the arm follows, and every demonstration is saved in LeRobot format.
+
+<br>
+
+[Overview](#overview) &nbsp;⬡&nbsp; [Architecture](#architecture) &nbsp;⬡&nbsp; [Getting started](#getting-started) &nbsp;⬡&nbsp; [Recording](#recording-demonstrations) &nbsp;⬡&nbsp; [Hardware](#running-on-hardware) &nbsp;⬡&nbsp; [Troubleshooting](#troubleshooting)
 
 <br>
 
 <img src="docs/media/hexa-sim-demo.gif" alt="HEXA driving a simulated SO-101 arm" width="760">
 
-<br>
-<br>
-
-`Android` &nbsp;·&nbsp; `iOS` &nbsp;·&nbsp; `Python 3.10+` &nbsp;·&nbsp; `SO-101` &nbsp;·&nbsp; `LeRobot` &nbsp;·&nbsp; `MIT`
-
-<br>
-
-[Overview](#overview) &nbsp;|&nbsp; [Architecture](#architecture) &nbsp;|&nbsp; [Getting started](#getting-started) &nbsp;|&nbsp; [Recording](#recording-demonstrations) &nbsp;|&nbsp; [Hardware](#running-on-hardware) &nbsp;|&nbsp; [Troubleshooting](#troubleshooting)
+<sub>An iPhone driving the simulated arm. No leader arm required.</sub>
 
 </div>
 
@@ -26,23 +23,22 @@ Move the phone, the arm follows, and every demonstration is recorded in LeRobot 
 
 ## Overview
 
-Learning from demonstration needs many examples of a human performing a task. The common way to gather them is a leader arm, a second robot that a person moves while the follower copies it. That means extra hardware, extra wiring and extra cost.
+Teaching a robot by demonstration takes many examples of a person doing the task. The usual tool is a leader arm: a second robot you move by hand while the follower copies it. That means extra hardware, wiring and cost.
 
-HEXA removes the second arm. The motion sensors already inside a phone give a precise 6-DoF pose, and HEXA turns that pose into joint commands for the SO-101. The same session can be logged as a dataset, ready for training policies such as ACT and SmolVLA.
+HEXA replaces it with something you already carry. A phone's motion sensors give a precise 6-DoF pose, and HEXA converts that pose into joint commands for the SO-101. The same session can be saved as a dataset for training policies such as ACT and SmolVLA.
 
-HEXA is open source, was built by students, and is used in our own research on vision-language-action models.
+HEXA is open source, built by students, and used in our own research on vision-language-action models.
 
 <br>
 
-## Highlights
-
-|  |  |
-| :--- | :--- |
-| **No leader arm** | The phone is the controller |
-| **Two platforms** | ARCore on Android, ARKit on iOS, one shared server |
-| **Simulator included** | Practise in the browser before the real arm moves |
-| **Training-ready data** | State, action, camera video and task label per episode |
-| **Built-in safety** | Speed caps, joint limits and a hold-to-move control |
+<table>
+  <tr>
+    <td width="25%" valign="top"><b>No leader arm</b><br><sub>The phone is the controller.</sub></td>
+    <td width="25%" valign="top"><b>Android and iOS</b><br><sub>ARCore and ARKit, one shared server.</sub></td>
+    <td width="25%" valign="top"><b>Simulator first</b><br><sub>Practise safely in the browser.</sub></td>
+    <td width="25%" valign="top"><b>Training-ready data</b><br><sub>State, action, video and task label.</sub></td>
+  </tr>
+</table>
 
 <br>
 
@@ -88,7 +84,7 @@ Begin in the simulator. No arm is needed and nothing can be damaged.
 
 **Requirements:** Python 3.10 or newer, an Android phone with ARCore or an iPhone with ARKit, and the phone and computer on the same Wi-Fi.
 
-### 1. Start the server
+**1. Start the server**
 
 ```bash
 unzip HEXA-Teleop.zip
@@ -98,11 +94,9 @@ chmod +x emberarm.sh
 ./emberarm.sh start --sim
 ```
 
-On Windows, use `emberarm.bat setup --no-lerobot`, then `emberarm.bat start --sim`.
+On Windows, use `emberarm.bat setup --no-lerobot`, then `emberarm.bat start --sim`. The server prints an address such as `ws://192.168.x.x:4443/ws`. Keep it handy.
 
-The server prints an address such as `ws://192.168.x.x:4443/ws`. Keep it handy.
-
-### 2. Install the app
+**2. Install the app**
 
 <details>
 <summary><b>Android</b></summary>
@@ -129,7 +123,7 @@ Free Apple ID signing expires after 7 days. Sideload again when it does.
 
 </details>
 
-### 3. Connect and calibrate
+**3. Connect and calibrate**
 
 1. Enter the server address in the app and tap **Connect**.
 2. Tap **Start tracking** and move the phone slowly over a bright, textured surface until it shows **Ready**.
@@ -224,15 +218,45 @@ To rebuild the apps after changing `app-source/`, you need Node.js 22+. Android 
 
 ## Troubleshooting
 
-| Symptom | What to try |
-| :--- | :--- |
-| App cannot connect | Keep the server running and both devices on the same Wi-Fi. Enter the address exactly as printed. Office and guest networks often block device-to-device traffic, so try a home router or phone hotspot. On Windows, allow ports 4443 and 8080 through the firewall |
-| Address stopped working | It can change when Wi-Fi reconnects. Restart the server and copy the new one |
-| "Initializing" or "Tracking lost" | Point the back camera at a bright, patterned surface and move slowly. Blank walls and dim rooms degrade tracking |
-| Motion is shaky | Hold the phone with both hands. To compare with raw motion, start the server with `EMBERARM_SMOOTH=0` |
-| Arm moves the wrong way | Tap **Calibrate** again after tracking was lost |
-| "Phone went silent" | The phone stopped sending for 3 seconds (screen locked, app in background, Wi-Fi dropped). Keep the screen on and reconnect |
-| iPhone app no longer opens | Free-account signing expired after 7 days. Sideload again |
+<details>
+<summary><b>App cannot connect</b></summary>
+<br>
+
+Keep the server running and both devices on the same Wi-Fi. Enter the address exactly as printed. Office and guest networks often block device-to-device traffic, so try a home router or phone hotspot. On Windows, allow ports 4443 and 8080 through the firewall. The address can change when Wi-Fi reconnects, so restart the server and copy the new one.
+
+</details>
+
+<details>
+<summary><b>"Initializing" or "Tracking lost"</b></summary>
+<br>
+
+Point the back camera at a bright, patterned surface and move slowly. Blank walls and dim rooms degrade tracking. Tap **Calibrate** again once tracking returns.
+
+</details>
+
+<details>
+<summary><b>Motion is shaky</b></summary>
+<br>
+
+Hold the phone with both hands. To compare with raw motion, start the server with `EMBERARM_SMOOTH=0`.
+
+</details>
+
+<details>
+<summary><b>"Phone went silent"</b></summary>
+<br>
+
+The phone stopped sending for 3 seconds (screen locked, app in background, or Wi-Fi dropped). Keep the screen on and reconnect.
+
+</details>
+
+<details>
+<summary><b>iPhone app no longer opens</b></summary>
+<br>
+
+Free-account signing expires after 7 days. Sideload the app again.
+
+</details>
 
 To check the kinematics with no phone or arm, run `./emberarm.sh selftest`. It should finish with `URDF OK`.
 
@@ -253,11 +277,13 @@ HEXA is a work in progress. We are now experimenting with ACT and SmolVLA and mo
 
 <br>
 
-## Team
-
 <div align="center">
 
+⬡
+
 **Deepak K** &nbsp;·&nbsp; **A M Likhitha** &nbsp;·&nbsp; **Chiranthan P**
+
+<sub>Built as part of our robotics research work.</sub>
 
 </div>
 
